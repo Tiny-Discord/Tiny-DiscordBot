@@ -1,6 +1,8 @@
 class Git:
     clone = "git clone -c credential.helper= -c core.askpass= --recurse-submodules -b {branch} {url} {folder}"
-    clone_no_branch = "git -c credential.helper= -c core.askpass= clone --recurse-submodules {url} {folder}"
+    clone_no_branch = (
+        "git -c credential.helper= -c core.askpass= clone --recurse-submodules {url} {folder}"
+    )
     current_branch = "git -C {path} symbolic-ref --short HEAD"
     current_commit = "git -C {path} rev-parse HEAD"
     latest_commit = "git -C {path} rev-parse {branch}"
