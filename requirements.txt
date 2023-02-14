@@ -1,4 +1,4 @@
-discord.py[speed]==2.0.1
+discord.py[speed]==2.1.1
 python-dotenv
 colorlog
 uvloop==0.17.0; sys_platform != "win32" and platform_python_implementation == "CPython"
