@@ -7,7 +7,7 @@ from colorlog import ColoredFormatter, StreamHandler as ColoredStreamHandler
 
 def init_logging():
     file_formatter = logging.Formatter(
-        fmt="[{asctime}] [{levelname:^7s}] [{name:<30s}] {message}",
+        fmt="[{asctime}] [{levelname}] [{name}] {message}",
         style="{",
     )
     info_file_handler = logging.handlers.RotatingFileHandler(
@@ -20,7 +20,7 @@ def init_logging():
     debug_file_handler.setFormatter(file_formatter)
 
     stdout_formatter = ColoredFormatter(
-        fmt="[{asctime}] [{log_color}{levelname:^7s}{reset}] [{name:^30s}] {message}",
+        fmt="[{asctime}] [{log_color}{levelname}{reset}] [{name}] {message}",
         style="{",
     )
     stdout_handler = ColoredStreamHandler()
