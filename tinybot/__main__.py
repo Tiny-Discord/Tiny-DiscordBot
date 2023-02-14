@@ -32,7 +32,7 @@ def run_bot() -> None:
     asyncio.set_event_loop(loop)
     bot = TinyBot(cli_flags.prefix)
     try:
-        loop.run_until_complete(bot.run(os.getenv("DISCORD_TOKEN")))
+        loop.run_until_complete(bot.start(os.getenv("DISCORD_TOKEN")))
     except KeyboardInterrupt:
         print("CTRL+C received, exiting...")
     finally:
