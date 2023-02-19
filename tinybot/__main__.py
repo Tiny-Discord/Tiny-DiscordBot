@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 
+import discord
 from dotenv import load_dotenv
 
 from .bot import TinyBot
@@ -33,6 +34,12 @@ def run_bot() -> None:
     bot = TinyBot(cli_flags.prefix)
     try:
         loop.run_until_complete(bot.start(os.getenv("DISCORD_TOKEN")))
+    except discord.LoginFailure:
+        log.exception("Failed to login to Discord:")
+    except discord.PrivilegedIntentsRequired:
+        log.error(
+            "You are missing one of the privileged intents. Please review on the developer Portal."
+        )
     except KeyboardInterrupt:
         print("CTRL+C received, exiting...")
     finally:
