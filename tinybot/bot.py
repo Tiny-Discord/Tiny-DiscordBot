@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import platform
 import traceback
@@ -33,9 +35,10 @@ class TinyBot(commands.AutoShardedBot):
             await self.load_extension(cog)
             log.info("Loaded cog: %s", cog)
 
-    async def sync_commands(self) -> None:
-        self.tree.copy_global_to(guild=discord.Object(id=self.used_guild_id))
-        await self.tree.sync(guild=discord.Object(id=self.used_guild_id))
+    async def sync_commands(self, guild: discord.Guild | None) -> None:
+        if guild:
+            self.tree.copy_global_to(guild=discord.Object(id=guild.id))
+        await self.tree.sync(guild=discord.Object(id=guild.id) if guild else None)
 
     async def on_command_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
         if isinstance(error, commands.MissingRequiredArgument):
@@ -44,7 +47,7 @@ class TinyBot(commands.AutoShardedBot):
             if error.args:
                 await ctx.send(error.args[0], ephemeral=True)
             else:
-                await ctx.send_help(ctx.command, ephemeral=True)
+                await ctx.send_help(ctx.command)
         elif isinstance(error, commands.CommandOnCooldown):
             if ctx.author.id in self.owner_ids:
                 ctx.command.reset_cooldown(ctx)

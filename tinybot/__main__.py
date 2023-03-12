@@ -33,6 +33,7 @@ def run_bot() -> None:
     asyncio.set_event_loop(loop)
     bot = TinyBot(cli_flags.prefix)
     try:
+        log.info("Starting TinyBot")
         loop.run_until_complete(bot.start(os.getenv("DISCORD_TOKEN")))
     except discord.LoginFailure:
         log.exception("Failed to login to Discord:")
@@ -43,6 +44,7 @@ def run_bot() -> None:
     except KeyboardInterrupt:
         print("CTRL+C received, exiting...")
     finally:
+        log.info("Shutting down")
         loop.run_until_complete(bot.close())
         loop.run_until_complete(loop.shutdown_asyncgens())
         loop.run_until_complete(asyncio.sleep(2))

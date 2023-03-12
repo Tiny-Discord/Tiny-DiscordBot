@@ -11,6 +11,11 @@ class Owner(commands.Cog):
     def __init__(self, bot: TinyBot):
         self.bot: TinyBot = bot
 
+    @commands.command(name="test")
+    @commands.is_owner()
+    async def test_command(self, ctx: commands.Context):
+        await ctx.send("Beep Boop")
+
     @commands.command()
     @commands.is_owner()
     async def shutdown(self, ctx: commands.Context):
@@ -22,7 +27,7 @@ class Owner(commands.Cog):
     @commands.is_owner()
     async def reload(self, ctx: commands.Context, cog_name: str):
         try:
-            await self.bot.reload_extension(f"src.cogs.{cog_name}")
+            await self.bot.reload_extension(f"tinybot.cogs.{cog_name}")
         except commands.ExtensionNotLoaded:
             await ctx.send(f"Cog `{cog_name}` was not loaded.")
         except commands.ExtensionNotFound:
@@ -45,7 +50,7 @@ class Owner(commands.Cog):
     @commands.command()
     async def unload(self, ctx: commands.Context, cog_name: str) -> None:
         try:
-            await self.bot.unload_extension(f"src.cogs.{cog_name}")
+            await self.bot.unload_extension(f"tinybot.cogs.{cog_name}")
         except commands.ExtensionNotLoaded:
             await ctx.send(f"Cog `{cog_name}` was not loaded.")
         else:
@@ -55,7 +60,7 @@ class Owner(commands.Cog):
     @commands.command()
     async def load(self, ctx: commands.Context, cog_name: str) -> None:
         try:
-            await self.bot.load_extension(f"src.cogs.{cog_name}")
+            await self.bot.load_extension(f"tinybot.cogs.{cog_name}")
         except commands.ExtensionAlreadyLoaded:
             await ctx.send(f"Cog `{cog_name}` is already loaded.")
         except commands.ExtensionNotFound:
