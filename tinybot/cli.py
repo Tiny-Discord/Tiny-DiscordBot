@@ -9,7 +9,7 @@ def parse_cli_flags() -> tuple[argparse.Namespace, list[str]]:
     parser.add_argument(
         "--dotenvfile-path",
         type=str,
-        default=None,
+        default=".",
         help="The path where the .env file is located.",
     )
     return parser.parse_known_args()
