@@ -1,5 +1,5 @@
 import os
-from typing import List, Type, Awaitable, Self
+from typing import Awaitable, List, Self, Type
 
 import asyncpg
 from dotenv import load_dotenv
@@ -8,6 +8,7 @@ from piccolo.engine.sqlite import SQLiteEngine
 from piccolo.table import Table, create_db_tables
 
 load_dotenv('../.env')
+
 
 class DBEngine:
     """
@@ -18,10 +19,10 @@ class DBEngine:
     as initial db creation.
     """
 
-
     def __init__(self: Self, path: str, cog_name: str) -> None:
         self.path = path
         self.cog_name = cog_name
+
     def connect(self: Self) -> SQLiteEngine | PostgresEngine:
         """
         Awaitable that returns the client's desired database engine.
@@ -40,10 +41,10 @@ class DBEngine:
         elif os.getenv("DB_TYPE") == 'postgres':
             return PostgresEngine(
                 config={
-                    'host':  os.getenv("DB_HOST"),
+                    'host': os.getenv("DB_HOST"),
                     'database': self.cog_name,
-                    'user':  os.getenv("DB_USER"),
-                    'password':  os.getenv("DB_PASSWORD")
+                    'user': os.getenv("DB_USER"),
+                    'password': os.getenv("DB_PASSWORD")
                 })
 
     async def postgres_create_db_and_connect(self: Self) -> Awaitable[None]:
@@ -78,7 +79,7 @@ class DBEngine:
         else:
             conn.close()
 
-    async def setup(self: Self, tables: List[Type[Table]], add_defaults: bool=False) -> Awaitable[None]:
+    async def setup(self: Self, tables: List[Type[Table]], add_defaults: bool = False) -> Awaitable[None]:
         """
 
         Parameters
@@ -104,5 +105,3 @@ class DBEngine:
                     pass
                 else:
                     await table.insert(table())
-
-

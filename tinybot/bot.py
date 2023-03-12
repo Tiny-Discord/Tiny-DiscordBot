@@ -7,7 +7,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from . import __version__
 
 log = logging.getLogger("tinybot.bot")
 

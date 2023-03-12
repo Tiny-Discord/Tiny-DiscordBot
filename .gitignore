@@ -149,3 +149,4 @@ out/
 .vscode/
 *.sublime-project
 *.sublime-workspace
+/run-pre-commit.sh
