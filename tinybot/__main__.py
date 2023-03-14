@@ -18,10 +18,12 @@ load_dotenv(cli_flags.dotenvfile_path)
 
 UVLOOP_INSTALLED: bool = False
 
+
 def _update_event_loop_policy(_asyncio) -> None:
+    global UVLOOP_INSTALLED
     if sys.implementation.name == "cpython":
         try:
-            import uvloop as _uvloop # type: ignore
+            import uvloop as _uvloop  # type: ignore
             UVLOOP_INSTALLED = True
         except ImportError:
             pass
@@ -35,14 +37,14 @@ async def run_bot() -> None:
         loop = asyncio.ProactorEventLoop()
     else:
         loop = asyncio.new_event_loop()
-    
+
     asyncio.set_event_loop(loop)
-    
+
     if UVLOOP_INSTALLED:
         _update_event_loop_policy(_asyncio=asyncio)
     else:
         pass
-    
+
     async with TinyBot(
         prefix=cli_flags.prefix,
         owner_ids=cli_flags.owner,
@@ -60,17 +62,17 @@ async def run_bot() -> None:
             print("CTRL + C received, exiting gracefully...")
         finally:
             log.info("Shutting down")
-            
+
             await bot.close()
-            
+
             loop.run_until_complete(loop.shutdown_asyncgens())
             loop.run_until_complete(asyncio.sleep(2))
-            
+
             asyncio.set_event_loop(None)
-            
+
             loop.stop()
             loop.close()
-    
+
             sys.exit()
 
 

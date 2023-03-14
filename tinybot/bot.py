@@ -1,25 +1,32 @@
 from __future__ import annotations
 
-import os
-import logging
+import collections
 import datetime
+import logging
+import os
 import platform
 import traceback
-import collections
-from typing import Any, Optional, Set, Union, TypeVar, Sequence, Type, Callable, Coroutine
+from typing import (
+    Any,
+    Optional,
+    Sequence,
+    Set,
+    Type,
+    TypeVar,
+    Union
+)
 
 import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-
 log: logging.Logger = logging.getLogger("tinybot.bot")
 
 
 InteractionChannel = Union[
-    discord.channel.VoiceChannel, 
-    discord.channel.StageChannel, 
+    discord.channel.VoiceChannel,
+    discord.channel.StageChannel,
     discord.channel.TextChannel,
     discord.channel.ForumChannel,
     discord.channel.CategoryChannel,
@@ -34,35 +41,38 @@ class _InteractionT(discord.Interaction):
     followup: discord.Webhook
     command: Union[app_commands.Command[Any, ..., Any], app_commands.ContextMenu, None]
     channel: Union[InteractionChannel, None]
- 
-    
+
+
 InteractionT = TypeVar("InteractionT", bound="Union[_InteractionT, discord.Interaction]")
 
 
 class TinyBot(commands.AutoShardedBot):
     user: discord.ClientUser
     bot_app_info: discord.AppInfo
-    
+
     cached_messages: Sequence[discord.Message]
-    
+
     tree_cls: Type[app_commands.CommandTree]
     tree: app_commands.CommandTree
-    
+
     def __init__(
         self,
         *args,
         prefix: str,
-        owner_ids: Set[int] = set(),
+        owner_ids: Optional[Set[int]] = None,
         **kwargs: Any,
     ):
+        if not owner_ids:
+            owner_ids = set()
+
         self.is_ready: bool = False
-        
+
         self.start_time: datetime.datetime = discord.utils.utcnow()
-        
+
         self.startup_time: Optional[datetime.timedelta] = None
-        
+
         intents: discord.Intents = discord.Intents.all()
-        
+
         super().__init__(
             *args,
             command_prefix=commands.when_mentioned_or(prefix),
@@ -73,32 +83,31 @@ class TinyBot(commands.AutoShardedBot):
             chunk_guilds_at_startup=True,
             enable_debug_events=True,
             intents=intents,
+            owner_ids=owner_ids,
             **kwargs,
         )
-        
-        self.owner_ids.update(owner_ids)
-        
+
         self.session: aiohttp.ClientSession = aiohttp.ClientSession(
             headers={
                 "User-Agent": f"TinyBot (Python/{platform.python_version()} aiohttp/{aiohttp.__version__})"
             }
         )
-        
+
         self.color: discord.Color = discord.Color.dark_blue()
 
     async def get_context(
         self, message: Union[discord.Message, InteractionT], /, *, cls: Optional[commands.Context] = None
     ) -> commands.Context:
         return await super(self.__class__, self).get_context(message, cls=cls if cls else commands.Context) # noqa
-    
+
     @property
     def all_cogs(self) -> collections.ChainMap[Any, Any]:
         return collections.ChainMap(self.cogs)
-    
+
     async def setup_hook(self) -> None:
         cogs = [
             f"tinybot.cogs.{cog if not cog.endswith('.py') else cog[:-3]}"
-            for cog in os.listdir(f'tinybot/cogs')
+            for cog in os.listdir('tinybot/cogs')
             if not cog.startswith("_")
         ]
         for cog in cogs:
@@ -180,10 +189,10 @@ class TinyBot(commands.AutoShardedBot):
     async def on_ready(self) -> None:
         if not hasattr(self, 'uptime'):
             self.uptime = discord.utils.utcnow()
-        
+
         if not hasattr(self, 'appinfo'):
             self.appinfo = (await self.application_info())
-            
+
         if self.is_ready:
             log.info(f'[ {self.user} ] reconnected at {datetime.datetime.now().strftime("%b %d %Y %H:%M:%S")}')
         else:
