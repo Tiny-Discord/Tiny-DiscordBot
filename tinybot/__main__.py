@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from .bot import TinyBot
 from .cli import parse_cli_flags
 from .logger import init_logging
-from ._monkey_patches import _apply_monkey_patches
 
 init_logging()
 log = logging.getLogger("tinybot.main")
@@ -43,8 +42,6 @@ async def run_bot() -> None:
         _update_event_loop_policy(_asyncio=asyncio)
     else:
         pass
-    
-    _apply_monkey_patches()
     
     async with TinyBot(
         prefix=cli_flags.prefix,
