@@ -12,4 +12,10 @@ def parse_cli_flags() -> tuple[argparse.Namespace, list[str]]:
         default=".",
         help="The path where the .env file is located.",
     )
+    parser.add_argument(
+        '--owner',
+        nargs='+',
+        type=int,
+        help="A list of user IDs that have owner access to the bot."
+    )
     return parser.parse_known_args()

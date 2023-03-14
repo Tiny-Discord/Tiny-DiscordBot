@@ -5,7 +5,7 @@ import os
 from colorlog import ColoredFormatter, StreamHandler as ColoredStreamHandler
 
 
-def init_logging():
+def init_logging() -> None:
     file_formatter = logging.Formatter(
         fmt="[{asctime}] [{levelname}] [{name}] {message}",
         style="{",
