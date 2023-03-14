@@ -41,9 +41,7 @@ InteractionT = TypeVar("InteractionT", bound="Union[_InteractionT, discord.Inter
 
 class TinyBot(commands.AutoShardedBot):
     user: discord.ClientUser
-    socket_stats: collections.Counter[str]
     bot_app_info: discord.AppInfo
-    old_tree_errror: Callable[[discord.Interaction, discord.app_commands.AppCommandError], Coroutine[Any, Any, None]]
     
     cached_messages: Sequence[discord.Message]
     
@@ -87,9 +85,6 @@ class TinyBot(commands.AutoShardedBot):
         )
         
         self.color: discord.Color = discord.Color.dark_blue()
-        
-        if not hasattr(self, 'socket_stats'):
-            self.socket_stats: collections.Counter[str] = collections.Counter()
 
     async def get_context(
         self, message: Union[discord.Message, InteractionT], /, *, cls: Optional[commands.Context] = None
