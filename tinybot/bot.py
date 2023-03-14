@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import logging
 import platform
 import traceback
@@ -31,9 +32,17 @@ class TinyBot(commands.AutoShardedBot):
         self.color: discord.Color = discord.Color.dark_blue()
 
     async def setup_hook(self) -> None:
-        for cog in ("tinybot.cogs.core",):
-            await self.load_extension(cog)
-            log.info("Loaded cog: %s", cog)
+        cogs = [
+            f"cogs.{cog if not cog.endswith('.py') else cog[:-3]}"
+            for cog in os.listdir('cogs')
+            if not cog.startswith("_")
+        ]
+        for cog in cogs:
+            try:
+                await self.load_extension(cog)
+                log.info(f"Loaded cog: {cog}")
+            except Exception as e:
+                log.exception(f"Failed to load cog: {cog}", exc_info=True)
 
     async def sync_commands(self, guild: discord.Guild | None) -> None:
         if guild:
