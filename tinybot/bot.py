@@ -90,9 +90,6 @@ class TinyBot(commands.AutoShardedBot):
         
         if not hasattr(self, 'socket_stats'):
             self.socket_stats: collections.Counter[str] = collections.Counter()
-        
-        self.resumes: collections.defaultdict[int, list[datetime.datetime]] = collections.defaultdict(list)
-        self.identifies: collections.defaultdict[int, list[datetime.datetime]] = collections.defaultdict(list)
 
     async def get_context(
         self, message: Union[discord.Message, InteractionT], /, *, cls: Optional[commands.Context] = None
@@ -102,26 +99,6 @@ class TinyBot(commands.AutoShardedBot):
     @property
     def all_cogs(self) -> collections.ChainMap[Any, Any]:
         return collections.ChainMap(self.cogs)
-    
-    def _clear_gateway_data(self) -> None:
-        one_week_ago = discord.utils.utcnow() - datetime.timedelta(days=7)
-        for shard_id, dates in self.identifies.items():
-            to_remove = [index for index, dt in enumerate(dates) if dt < one_week_ago]
-            for index in reversed(to_remove):
-                del dates[index]
-
-        for shard_id, dates in self.resumes.items():
-            to_remove = [index for index, dt in enumerate(dates) if dt < one_week_ago]
-            for index in reversed(to_remove):
-                del dates[index]
-                
-    async def on_shard_resumed(self, shard_id: int) -> None:
-        self.resumes[shard_id].append(discord.utils.utcnow())
-                
-    async def before_identify_hook(self, shard_id: int, *, initial: bool) -> None:
-        self._clear_gateway_data()
-        self.identifies[shard_id].append(discord.utils.utcnow())
-        await super().before_identify_hook(shard_id, initial=initial)
     
     async def setup_hook(self) -> None:
         cogs = [
