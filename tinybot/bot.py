@@ -2,46 +2,110 @@ from __future__ import annotations
 
 import os
 import logging
+import datetime
 import platform
 import traceback
+import collections
+from typing import Any, Optional, Set, Union, TypeVar, Sequence, Type, Callable, Coroutine
 
 import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-log = logging.getLogger("tinybot.bot")
+
+log: logging.Logger = logging.getLogger("tinybot.bot")
+
+
+InteractionChannel = Union[
+    discord.channel.VoiceChannel, 
+    discord.channel.StageChannel, 
+    discord.channel.TextChannel,
+    discord.channel.ForumChannel,
+    discord.channel.CategoryChannel,
+    discord.threads.Thread,
+    discord.channel.PartialMessageable,
+]
+
+
+class _InteractionT(discord.Interaction):
+    bot: "TinyBot"
+    response: discord.InteractionResponse
+    followup: discord.Webhook
+    command: Union[app_commands.Command[Any, ..., Any], app_commands.ContextMenu, None]
+    channel: Union[InteractionChannel, None]
+ 
+    
+InteractionT = TypeVar("InteractionT", bound="Union[_InteractionT, discord.Interaction]")
 
 
 class TinyBot(commands.AutoShardedBot):
-    def __init__(self, prefix: str):
+    user: discord.ClientUser
+    bot_app_info: discord.AppInfo
+    
+    cached_messages: Sequence[discord.Message]
+    
+    tree_cls: Type[app_commands.CommandTree]
+    tree: app_commands.CommandTree
+    
+    def __init__(
+        self,
+        *args,
+        prefix: str,
+        owner_ids: Set[int] = set(),
+        **kwargs: Any,
+    ):
+        self.is_ready: bool = False
+        
+        self.start_time: datetime.datetime = discord.utils.utcnow()
+        
+        self.startup_time: Optional[datetime.timedelta] = None
+        
+        intents: discord.Intents = discord.Intents.all()
+        
         super().__init__(
+            *args,
             command_prefix=commands.when_mentioned_or(prefix),
+            member_cache_flags=discord.MemberCacheFlags.from_intents(intents),
             allowed_mentions=discord.AllowedMentions(
                 everyone=False, roles=False, users=True, replied_user=True
             ),
             chunk_guilds_at_startup=True,
-            intents=discord.Intents.all(),
             enable_debug_events=True,
+            intents=intents,
+            **kwargs,
         )
+        
+        self.owner_ids.update(owner_ids)
+        
         self.session: aiohttp.ClientSession = aiohttp.ClientSession(
             headers={
                 "User-Agent": f"TinyBot (Python/{platform.python_version()} aiohttp/{aiohttp.__version__})"
             }
         )
+        
         self.color: discord.Color = discord.Color.dark_blue()
 
+    async def get_context(
+        self, message: Union[discord.Message, InteractionT], /, *, cls: Optional[commands.Context] = None
+    ) -> commands.Context:
+        return await super(self.__class__, self).get_context(message, cls=cls if cls else commands.Context) # noqa
+    
+    @property
+    def all_cogs(self) -> collections.ChainMap[Any, Any]:
+        return collections.ChainMap(self.cogs)
+    
     async def setup_hook(self) -> None:
         cogs = [
-            f"cogs.{cog if not cog.endswith('.py') else cog[:-3]}"
-            for cog in os.listdir('cogs')
+            f"tinybot.cogs.{cog if not cog.endswith('.py') else cog[:-3]}"
+            for cog in os.listdir(f'tinybot/cogs')
             if not cog.startswith("_")
         ]
         for cog in cogs:
             try:
                 await self.load_extension(cog)
                 log.info(f"Loaded cog: {cog}")
-            except Exception as e:
+            except Exception:
                 log.exception(f"Failed to load cog: {cog}", exc_info=True)
 
     async def sync_commands(self, guild: discord.Guild | None) -> None:
@@ -114,8 +178,31 @@ class TinyBot(commands.AutoShardedBot):
             log.error(type(error).__name__, exc_info=error)
 
     async def on_ready(self) -> None:
-        log.info("Logged in as %s", str(self.user))
-        log.info("TinyBot ready!")
+        if not hasattr(self, 'uptime'):
+            self.uptime = discord.utils.utcnow()
+        
+        if not hasattr(self, 'appinfo'):
+            self.appinfo = (await self.application_info())
+            
+        if self.is_ready:
+            log.info(f'[ {self.user} ] reconnected at {datetime.datetime.now().strftime("%b %d %Y %H:%M:%S")}')
+        else:
+            self.is_ready = True
+            self.startup_time = discord.utils.utcnow() - self.start_time
+            log.info('--------------------------------------------------------------------------------------------------------------------')
+            log.info("|████████╗██╗███╗   ██╗██╗   ██╗     ██████╗ ██╗███████╗ ██████╗ ██████╗ ██████╗ ██████╗ ██████╗  ██████╗ ████████╗|")
+            log.info("|╚══██╔══╝██║████╗  ██║╚██╗ ██╔╝     ██╔══██╗██║██╔════╝██╔════╝██╔═══██╗██╔══██╗██╔══██╗██╔══██╗██╔═══██╗╚══██╔══╝|")
+            log.info("|   ██║   ██║██╔██╗ ██║ ╚████╔╝█████╗██║  ██║██║███████╗██║     ██║   ██║██████╔╝██║  ██║██████╔╝██║   ██║   ██║   |")
+            log.info("|   ██║   ██║██║╚██╗██║  ╚██╔╝ ╚════╝██║  ██║██║╚════██║██║     ██║   ██║██╔══██╗██║  ██║██╔══██╗██║   ██║   ██║   |")
+            log.info("|   ██║   ██║██║ ╚████║   ██║        ██████╔╝██║███████║╚██████╗╚██████╔╝██║  ██║██████╔╝██████╔╝╚██████╔╝   ██║   |")
+            log.info("|   ╚═╝   ╚═╝╚═╝  ╚═══╝   ╚═╝        ╚═════╝ ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚═════╝ ╚═════╝  ╚═════╝    ╚═╝   |")
+            log.info('--------------------------------------------------------------------------------------------------------------------')
+            log.info(f"Discord.py: {discord.__version__} | Servers: {len(self.guilds)} | Users: {(sum(len(i.members) for i in self.guilds)):,}")
+            log.info('--------------------------------------------------------------------------------------------------------------------')
+            log.info(f'Startup Time: {self.startup_time.total_seconds():.2f} seconds')
+            log.info('--------------------------------------------------------------------------------------------------------------------')
+            log.info(f'Owners: {", ".join(str(i) for i in self.owner_ids)}')
+            log.info('--------------------------------------------------------------------------------------------------------------------')
 
     async def close(self) -> None:
         await self.session.close()
