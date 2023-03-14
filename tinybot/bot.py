@@ -62,7 +62,7 @@ class TinyBot(commands.AutoShardedBot):
         owner_ids: Optional[Set[int]] = None,
         **kwargs: Any,
     ):
-        if not owner_ids:
+        if owner_ids is None:
             owner_ids = set()
 
         self.is_ready: bool = False
